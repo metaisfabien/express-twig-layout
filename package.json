@@ -1,0 +1,25 @@
+{
+  "name": "express-twig-layout",
+  "description": "A template layout system for Express",
+  "author": {
+    "name": "Metais Fabien",
+    "email": "metaisfabien@gmail.com"
+  },
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metaisfabien/express-twig-layout.git"
+  },
+  "main": "index.js",
+  "contributors": [],
+  "maintainers": [],
+  "license": "MIT",
+  "dependencies": {
+    "twig-layout": "^0.1.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {}
+}
