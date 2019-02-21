@@ -5,7 +5,7 @@
     "name": "Metais Fabien",
     "email": "metaisfabien@gmail.com"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/metaisfabien/express-twig-layout.git"
@@ -25,7 +25,7 @@
   "maintainers": [],
   "license": "MIT",
   "dependencies": {
-    "twig-layout": "^0.1.1"
+    "twig-layout": "^0.1.3"
   },
   "devDependencies": {},
   "engines": {

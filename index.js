@@ -4,41 +4,26 @@
  * Copyright(c) 2018 Metais Fabien
  * MIT Licensed
  */
-var options = {}
+let options = {}
 //Layout object
 const Layout = require('twig-layout')
-module.exports = function (options) {
-  var opts = options || {}
-  return function (req, res, next) {
-    function createInstance (options) {
-      //add a new instance of Layout on the request object
-      req.layout = new Layout(options)
-      req.layout.req = req
-      next()
-    }
+module.exports = function (opts) {
+  options = opts || {}
+  return async function (req, res, next) {
 
     //warn
     if (req.layout) {
       next()
       return
     }
-
-    var options = {
-      //views directory
-      views: req.app.get('views'),
-      blocks: req.app.get('blocks'),
+    if (!options.views) {
+      options.views = req.app.get('views')
     }
 
-    if (opts.extend) {
-      opts.extend(req, res, (extendBlock, extendTemplate) => {
-        //object to extend the block Object
-        options.extendBlock = extendBlock || {}
-        //object to extend the data template Object
-        options.extendTemplate = extendTemplate || {}
-        createInstance(options)
-      })
-    } else {
-      createInstance(options)
-    }
+    //add a new instance of Layout on the request object
+    req.layout = new Layout(options)
+    await req.layout.init()
+    req.layout.req = req
+    next()
   }
 }

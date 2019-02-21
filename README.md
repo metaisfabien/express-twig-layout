@@ -22,13 +22,19 @@ $ npm install --save express-twig-layout
 ## index.js
 Create a simple express app with two route: /home and /test
 ```js
-var express = require('express')
-var layout = require('express-twig-layout')
-var app = express()
+const express = require('express')
+const layout = require('express-twig-layout')
+const app = express()
 
 //set the views directory
-app.set('view', './views')
-app.use(layout())
+app.set('views', './views')
+
+app.use(layout({      
+  cache: false,
+  tmpDir: './tmp',
+  sourceMap: false,
+  mode: 'eval',
+}))
 
 //home route
 app.get('/home', function (req, res) {
@@ -71,7 +77,7 @@ For the template syntax read the twig js [documentation](https://github.com/twig
     <!doctype html>
     <html lang="en">
     <!-- block head -->
-    {{blocks.head}}
+    {{ getBlockHtml('head') }}
     <body>
 
     <header>
@@ -88,7 +94,7 @@ For the template syntax read the twig js [documentation](https://github.com/twig
     </header>
     <main role="main">
         <!-- block content -->
-        {{blocks.content}}
+        {{ getBlockHtml('content') }}
     </main>
 
     <footer>
@@ -99,7 +105,7 @@ For the template syntax read the twig js [documentation](https://github.com/twig
 </template>
 <script>
   //Require the block dependency
-  var Block = require('node-twig-layout/block')
+  var Block = require('twig-layout/block')
 
   //Block for the page
   class Default extends Block {
@@ -113,7 +119,7 @@ For the template syntax read the twig js [documentation](https://github.com/twig
 
       //content block it just a block container
       //to use block with no html temple use type
-      this.addBlock({name: 'content', script: 'container'})
+      this.addBlock({name: 'content', script: 'twig-layout/scripts/container'})
     }
 
     /**
@@ -139,19 +145,19 @@ template for the head block define in the file views/page/default.html
         <meta name="description" content="">
         <meta name="author" content="">
 
-        <title>{{title}}</title>
-        {% for file in css %}
-        <link rel="stylesheet" href="{{file}}">
+        <title>{{ title }}</title>
+        {% for css in this.css %}
+        <link rel="stylesheet" href="{{ css.file }}">
         {% endfor %}
 
-        {% for file in js %}
-        <script src="{{file}}"></script>
+        {% for js in this.js %}
+        <script src="{{ js.file }}"></script>
         {% endfor %}
     </head>
 </template>
 <script>
   //requite the block object
-  var Block = require('node-twig-layout/block')
+  var Block = require('twig-layout/block')
 
   //A Test class for the test page
   class Head extends Block {
@@ -159,23 +165,21 @@ template for the head block define in the file views/page/default.html
      * Init method
      */
     init() {
-      //unsorted array
-      this._css = []
-      this._js = []
+      this.name = 'head'
 
       //data array for render
-      this.data.css = []
-      this.data.js = []
+      this.css = []
+      this.js = []
     }
 
     //add css files
     addCss (cssFiles, weight = 0) {
       if (Array.isArray(cssFiles)) {
-        for (var key in cssFiles) {
-          this._css.push({weight: weight, file: cssFiles[key]})
+        for (const key in cssFiles) {
+          this.css.push({weight: weight, file: cssFiles[key]})
         }
       } else if (typeof cssFiles === 'string') {
-        this._css.push({weight: weight, file: cssFiles})
+        this.css.push({weight: weight, file: cssFiles})
       } else {
         throw Error('Invalid addCss argument')
       }
@@ -184,11 +188,11 @@ template for the head block define in the file views/page/default.html
     //add js files to the data object
     addJs (jsFiles) {
       if (Array.isArray(jsFiles)) {
-        for (var key in jsFiles) {
-          this._js.push({weight: weight, file: jsFiles[key]})
+        for (const key in jsFiles) {
+          this.js.push({weight: weight, file: jsFiles[key]})
         }
       } else if (typeof jsFiles === 'string') {
-        this._js.push({weight: weight, file: jsFiles})
+        this.js.push({weight: weight, file: jsFiles})
       } else {
         throw Error('Invalid addJs argument')
       }
@@ -198,16 +202,11 @@ template for the head block define in the file views/page/default.html
      * Before render callback
      */
     beforeRender() {
-      var sort = function(a, b) {
+      const sort = function(a, b) {
         return a.weight - b.weight
       }
-      this._css.sort(sort);
-      for (const key in this._css)
-        this.data.css.push(this._css[key].file)
-
-      this._js.sort(sort);
-      for (const key in this._js)
-        this.data.js.push(this._js[key].file)
+      this.css.sort(sort);
+      this.js.sort(sort);
     }
   }
 
@@ -220,12 +219,12 @@ The template for the /home route
 ```html
 <template>
     <div>
-        <h1>Home page</h1>
+        <h1>{{ this.title }}</h1>
     </div>
 </template>
 <script>
   //requite the block object
-  var Block = require('node-twig-layout/block')
+  var Block = require('twig-layout/block')
 
   //A Block class for the home page
   class Home extends Block {
@@ -234,6 +233,9 @@ The template for the /home route
       //name of the parent block of this block
       //here the block content, it is defined in the file page/default.html
       this.parent = 'content'
+      this.name = 'home'
+
+      this.title = 'Home page'
     }
 
     beforeRender() {
@@ -249,12 +251,12 @@ The template for the /test route
 ```html
 <template>
     <div class="test">
-        <h1>Test</h1>
+        <h1>{{ this.title }}</h1>
     </div>
 </template>
 <script>
   //requite the block object
-  var Block = require('node-twig-layout/block')
+  var Block = require('twig-layout/block')
 
   //A Test class for the test page
   class Test extends Block {
@@ -262,7 +264,9 @@ The template for the /test route
       this.page ='page/default.html'
       //name of the parent block of this block
       //here the block content, it is defined in the file page/default.html
-      this.parent= 'content'
+      this.parent = 'content'
+      this.name = 'test'
+      this.title = 'Test'
     }
   }
 
